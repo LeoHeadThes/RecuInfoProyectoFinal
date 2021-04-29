@@ -1,0 +1,59 @@
+import java.io.*;
+class Noticia{
+   String titulo;;
+   String numero;
+   String contenido;;
+
+Noticia(){
+	titulo = "";
+	numero = "0";
+	contenido = "";
+}
+
+   void tomarTitulo(String texto){
+   	
+   titulo = texto;
+   }
+   
+   void tomarNumero(String valor){
+   String mantenEsto = "0123456789";
+   String trueNumber = "";
+   char c;
+   
+   for(int i=0;i<valor.length();i++){
+   	c = valor.charAt(i);
+   	for(int j=0;j<10;j++){
+   		if(c == mantenEsto.charAt(j))
+   			trueNumber = trueNumber + c;
+   		}
+      }
+   	numero = trueNumber;
+   
+   }
+   
+   void tomarNoticia(String texto){
+   contenido = contenido + texto;
+   }
+
+   String darTitulo(){
+   return titulo;
+   }
+   
+   String darNumero(){
+   return numero;
+   }
+   
+   String darNoticia(){
+   return contenido;
+   }
+   
+   void borraNoticia(){
+   contenido = "";
+   }
+   
+   void copiar(Noticia copiaEsta){
+	titulo = copiaEsta.darTitulo();
+	numero = copiaEsta.darNumero();
+	contenido = copiaEsta.darNoticia();
+   }
+}
