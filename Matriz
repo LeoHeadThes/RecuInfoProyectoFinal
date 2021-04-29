@@ -1,0 +1,269 @@
+/**
+ * PROYECTO EQUIPO 8
+ * 1.Obtener la representación de los documentos en una matriz TF.
+ * 2.Obtener la similitud entre todos los pares de documentos.
+ * System.out.println();
+ * @version 4.00 27/04/2021
+ */
+
+import java.io.*;
+import java.util.*;
+
+public class Matriz {
+	
+	FileReader fr = null;
+    BufferedReader br = null;
+    
+	FileReader fr2 = null;
+    BufferedReader br2 = null;
+    
+    public Matriz() {
+    }
+ 
+    public void dameTexto(String nombreArchivo){
+    	String frecuencias = "C:\\Users\\Leo\\Documents\\000BELTRANrecu\\Proyecto\\MatrizF.txt";
+    	String guardarRes = "C:\\Users\\Leo\\Documents\\000BELTRANrecu\\Proyecto\\ProcesadoF.txt";
+    	ArrayList<String> vocabulario = new ArrayList<String>();
+    	ArrayList<String> unDocumento = new ArrayList<String>();
+    	
+    	Noticia listaNoticias [] = new Noticia [102];
+    	Noticia auxNoticia = new Noticia();
+
+    	Scanner teclado = new Scanner(System.in);
+    	Scanner laNoticiaEs = new Scanner(System.in);
+    	
+    	String linea="";
+		File archivo = null;
+		archivo = new File (nombreArchivo);
+		int filas=0,columnas=0,i,j,esta,consulta; //fila es documento, columna es palabra
+		
+  		try {
+         	fr = new FileReader (archivo);
+         	br = new BufferedReader(fr);
+         	
+         	fr2 = new FileReader (archivo);
+         	br2 = new BufferedReader(fr2);
+         
+         	while((linea=br.readLine()) != null){
+         		 if(linea.equals("<<<<")){
+         		 	listaNoticias[filas] = new Noticia();
+         		 	listaNoticias[filas].copiar(auxNoticia);
+         		 	filas++;
+         		 	auxNoticia.borraNoticia();
+         		 	}else if(linea.length()>0){
+         		 		if((linea.charAt(0) == '-'))
+         		 			auxNoticia.tomarTitulo(linea);
+         		 			else if((linea.charAt(0) == '+'))
+         		 				auxNoticia.tomarNumero(linea);
+         		 				else
+         		 					auxNoticia.tomarNoticia(linea);
+         		 		}
+         		} //todas las noticias han sido guardadas en un arreglo de tipo Noticia, hay 101 noticias en total, osea 101 filas
+         		
+         	for(i=0;i<filas;i++){
+         		vocabulario = listaTerminos(listaNoticias[i].darNoticia(),vocabulario);
+         		}//obtiene el vocabulario
+         	
+         	columnas = vocabulario.size(); // obtiene el tamaño del vocabulario
+         	
+         	int [][] tf = new int[filas][columnas];
+         	
+         	for(i=0;i<filas;i++){ //Llenar la matriz de ceros
+         		for(j=0;j<columnas;j++)
+         			tf[i][j] = 0;
+         		}
+         		
+         	for(i=0;i<filas;i++){
+         		unDocumento = creaArray(listaNoticias[i].darNoticia());
+         		obtenFrec(unDocumento,tf,i,vocabulario);
+         		}//obtiene la matriz de todo el archivo
+         	
+         	escribeTF(vocabulario,tf,filas,frecuencias);
+         	
+         	
+         	//El final
+         	do{
+         		System.out.println("\no-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o-o");
+         		System.out.println("Hola, elija alguna opción:");
+         		System.out.println("Mostrar lista de comparación -> 1");
+         		System.out.println("Mostrar matriz de documentos -> 2");
+         		System.out.println("Mostrar alguna noticia -> 3");
+         		System.out.println("Salir -> 0");
+         		consulta = teclado.nextInt();
+         		
+         		switch(consulta){
+         			case 0:
+         			for(i=0;i<3;i++)System.out.println(".");
+         			break;
+         			case 1:
+         				SimCos(tf,columnas);
+         			break;
+         			case 2:
+         				printerNoJutsu(102,30,tf,vocabulario);
+         				System.out.println();
+         			break;
+         			case 3:
+         				System.out.println("Ingrese número de la noticia:");
+         				esta = laNoticiaEs.nextInt();
+         				System.out.println(listaNoticias[esta-1].darTitulo());
+         				System.out.println(listaNoticias[esta-1].darNumero());
+         				System.out.println(listaNoticias[esta-1].darNoticia());
+         			break;
+         			}
+         		
+         		}while(consulta!=0);
+         		
+				System.out.println("¡Fin del programa!");
+         	
+  			}catch(Exception e){
+         	e.printStackTrace();
+      	}
+    	} //Aqui leo el archivo
+    
+    public ArrayList<String> listaTerminos(String lineaDocumento, ArrayList terminos){
+    	ArrayList<String> documentoLeido = creaArray(lineaDocumento);
+    	int i,TAM=documentoLeido.size();
+    	String palabra = "";
+    	boolean yaLeido;
+    	
+    	for(i=0;i<TAM;i++){
+    		palabra=documentoLeido.get(i);
+    		yaLeido=terminos.contains(palabra);
+    		if(yaLeido==false)
+    			terminos.add(palabra);
+    		}
+    	return terminos;
+    	}
+    
+    public void obtenFrec(ArrayList<String>documento, int [][] pesos, int filaDocu, ArrayList<String> vocabulario){
+    	int i,posColumna,TAM=documento.size();
+    	String palabra = "";
+    	char c;
+    	//System.out.println(filaDocu);
+    	for(i=0;i<TAM;i++){
+    		palabra=documento.get(i);
+    		if(vocabulario.contains(palabra)){
+    			posColumna=vocabulario.indexOf(palabra);
+    			pesos[filaDocu][posColumna]++;
+    			}
+    		}
+    	} //Checar que palabra se encuentra en que documento
+    
+    public ArrayList<String> creaArray(String cadena){
+    	ArrayList<String> auxArray = new ArrayList<String>();
+    	String palabra = "";
+    	char c;
+    	int i,TAM = cadena.length();
+    	
+    	for(i=0;i<TAM;i++){
+    		c = cadena.charAt(i);
+    		if(c!=' ' && i!=TAM-1){ //Si no es un espacio y no es la ultima letra de la línea
+    			palabra = palabra+c;
+    			}else if(palabra.length()>0){
+    				if(i==TAM-1)palabra = palabra+c;	
+    				auxArray.add(palabra);
+    				palabra = "";
+    				}
+    		}
+    	
+    	return auxArray;
+    	} //Lee una cadena y la pone en un array
+    
+    public void escribeTF(ArrayList terminos, int tf[][],int filas,String destino){
+    	//Filas es el número total de documentos
+    	File archivoEscribe = null;
+		archivoEscribe = new File (destino);
+		int TAM = terminos.size();
+		String renglon = "Termino"+"\t";
+		int i,j;
+		
+  		try {
+         	FileWriter w = new FileWriter(archivoEscribe);
+         	BufferedWriter bw = new BufferedWriter(w);
+         	PrintWriter wr = new PrintWriter(bw);
+         	
+         	for(j=0;j<filas;j++){
+         		renglon = renglon+"Doc"+j+"\t";
+         		}
+         	wr.append(renglon);
+         	renglon="";
+         	
+         	for(i=0;i<TAM;i++){
+         		renglon = terminos.get(i)+"\t";
+         		for(j=0;j<filas;j++){
+         			renglon = renglon+tf[j][i]+"\t";
+         			}
+         		wr.append(renglon);
+         		renglon="";
+         		}
+         		
+         	wr.close();
+         	bw.close();	
+  			}catch(Exception e){
+         	e.printStackTrace();
+      	}
+		
+    	}
+ 
+    public double sumCuadrada(int vectorDocu[],int columnas){
+    	int i,cuadrado;
+    	double sum = 0;
+    	
+    	for(i=0;i<columnas;i++)
+    		if(vectorDocu[i]>0){
+    			cuadrado = vectorDocu[i];
+    			sum = sum + cuadrado * cuadrado;
+    			}
+    			
+    	return sum;
+    	}
+    
+    public double sumNumerador(int vectorDocu[], int vectorDocu2[], int columnas){
+    	int i;
+    	double doc1,doc2,sum = 0;
+    	
+    	for(i=0;i<columnas;i++){
+    		doc1 = vectorDocu[i];
+    		doc2 = vectorDocu2[i];
+    		if(doc1>0 && doc2>0){
+    			sum = sum + doc1*doc2; 
+    			}
+    		}
+    	return sum;
+    	}
+    
+    public void SimCos(int tf [][],int columnas){
+    	double similitud,numerador,denominador,cuadrado1,cuadrado2;
+    	int i;
+    	
+    	for(i=0;i<51;i++){
+    		numerador = sumNumerador(tf[i],tf[i+51],columnas);
+    		cuadrado1 = sumCuadrada(tf[i],columnas);
+    		cuadrado2 = sumCuadrada(tf[i+51],columnas);
+    		denominador = Math.sqrt(cuadrado1) * Math.sqrt(cuadrado2);
+    		similitud = numerador / denominador;
+    		
+    		System.out.println("DOC"+(i+1)+"y DOC"+(i+52)+": "+similitud);
+    		}
+    	}
+    
+    public void printerNoJutsu(int documentos, int palabras, int [][] matrix, ArrayList<String> vocabulario){
+    		int i,j;
+    		
+    		System.out.print("Documento"+"\t");
+    		for(i=0;i<documentos;i++)System.out.print(vocabulario.get(i)+"\t\t");
+         	for(i=0;i<documentos;i++){
+         		System.out.println();
+         		System.out.print("Doc"+i+"\t");
+         		for(j=0;j<palabras;j++)
+         			System.out.print("\t"+matrix[i][j]+"\t");
+         		}
+    	}
+    	 
+    public static void main (String[] argv) {
+    	String direccion= "C:\\Users\\Leo\\Documents\\000BELTRANrecu\\Proyecto\\temp.txt";
+    	Matriz proyecto = new Matriz();	
+		proyecto.dameTexto(direccion);
+    	}
+    
+}
