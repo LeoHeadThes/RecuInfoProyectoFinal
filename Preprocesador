@@ -1,0 +1,195 @@
+/* PROYECTO EQUIPO 8
+ * Eliminar todos los signos de puntuación, números y convertir a minúsculas.
+ * Eliminación de palabras cerradas/vacías.
+ * Lleva a cabo el truncamiento o segmentación, obteniendo las raíces de las palabras.
+ * System.out.println();
+ */
+
+import java.io.*;
+import java.util.*;
+import java.text.Normalizer;
+
+public class Preprocesador {
+    
+    public Preprocesador() {
+    }
+    
+    public void procesaTexto(String nombreArchivo){
+    	ArrayList <String> cerradas = new ArrayList <String> ();
+    	cerradas = leerLista(cerradas);
+    	// Unicode Character \u201C “ | \u201D ” | U+2019 ’
+    	String signosDePunt = "?!#_/$%^&*()+=`~><;:,–-.[]…’´'“”«»ð1234567890â€œ™\"\"";
+    	String procesada = "";
+    	String linea = "";
+		File archivo = null;
+		archivo = new File (nombreArchivo);
+
+			try {
+				if(!archivo.exists())
+					throw new FileNotFoundException(":(");
+				}catch(FileNotFoundException e){
+					System.out.println("El archivo "+nombreArchivo+" no existe :(");
+					}
+
+		File archivoEscribe = null;
+		archivoEscribe = new File ("C:\\Users\\Leo\\Documents\\000BELTRANrecu\\Proyecto\\temp.txt");
+  		try {
+         	FileReader fr = new FileReader (archivo);
+         	FileInputStream fis = new FileInputStream(archivo);
+			InputStreamReader isr = new InputStreamReader(fis, "cp1252"); //Leer caracteres Unicode
+			BufferedReader br = new BufferedReader(isr);
+         	
+         	FileWriter w = new FileWriter(archivoEscribe,false); //Borrar o no el nuevo archivo
+         	BufferedWriter bw = new BufferedWriter(w);
+         	PrintWriter wr = new PrintWriter(bw);
+         	
+         	while((linea=br.readLine()) != null){ //Llega hasta el final del archivo
+         		procesada = preProcesar(linea,signosDePunt,cerradas);
+         		wr.append(procesada+'\n');
+         		}
+         		
+         	wr.close();
+         	bw.close();	
+  			}catch(Exception e){
+         	e.printStackTrace();
+      	}
+    	} //Aqui leo el archivo
+    
+    public String preProcesar(String texto, String signos, ArrayList<String> listaCerradas){ 
+    	String CadenaPreprocesada = "";
+    	String palabra = "";
+    	int TAM = texto.length();
+    	boolean terminaLaNoticia = false;
+    	boolean esTitulo = false;
+    	boolean noDocu = false;
+    	char c,b;
+    	
+    	for(int i=0;i<TAM;i++){
+    		c = texto.charAt(i);
+    		
+    		if(c != 32 && i<TAM-1){
+    			palabra = palabra + c;
+    			}else{
+    			   if(palabra.length() > 0){
+    			   	
+    			   	if(i == TAM-1)
+    			   		palabra = palabra + c;
+    			   	
+    			   	if(palabra.contains("</cuerpo>"))terminaLaNoticia = true;
+    			   	if(palabra.contains("<periodico>"))esTitulo = true;
+    			   	if(palabra.contains("<noticia>") || palabra.contains("<noticias>"))noDocu = true;
+    			   	
+    			   	palabra = quitaEtiqueta(palabra); 
+    			   	 	    			   	
+    				if(esCerrada(palabra, listaCerradas)){
+    					palabra = "";
+    					}else{
+    						if(!noDocu)
+    							palabra = quitaPuntuacion(palabra,signos);
+    							else
+    								palabra = "+ " + palabra;
+    						}	
+    				CadenaPreprocesada = CadenaPreprocesada + palabra + ' ';
+    				palabra = "";
+    					}
+    				}
+    		}
+    	if(terminaLaNoticia)CadenaPreprocesada = CadenaPreprocesada + "\n<<<<";
+    	if(esTitulo)CadenaPreprocesada = "- " + CadenaPreprocesada;
+    	return CadenaPreprocesada;
+    	} //Se lee una línea entera
+    
+    public String quitaPuntuacion(String palabra, String signos){
+    	String palabraLimpia = "";
+    	int i,j,mayus,TAM;
+    	boolean esSigno = false;
+    	char c,b;	
+    	
+    	palabra = Normalizer.normalize(palabra, Normalizer.Form.NFD);			//Separa loas acentos
+    	palabra = palabra.replaceAll("[\\p{InCombiningDiacriticalMarks}]", "");	//Elimina los acentos
+    	TAM = palabra.length();
+    	
+    	for(i=0;i<TAM;i++){
+    		c = palabra.charAt(i); //comparar todos los caracteres con todos los símbolos
+    		for(j=0;j<signos.length();j++){
+    			if(c == signos.charAt(j)){
+    				esSigno = true;
+    				j = signos.length();
+    				}	
+    			}
+    			
+    		if(esSigno == false){//Se examinaron todos los signos, entonces no es un signo
+    			if(c > 64 && c < 91){ //Convertir a minúsculas.
+    				mayus = c + 32;
+    				c = (char)mayus;
+    				}
+    			}else{			//Si es un signo se sustituye por un espacio
+    				c = '$';    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    				esSigno = false;
+    				}
+    			
+    			if(c != '$')	
+    			palabraLimpia = palabraLimpia + c; //Se agrega el caracter a la palabra final
+    			else
+    			c= ' ';
+    			 
+    		}
+    		return palabraLimpia;
+    	}
+    
+    public boolean esCerrada(String palabra, ArrayList<String> listaCerradas){
+    	palabra = palabra.toLowerCase(); //Todas las palabras en la lista de palabras cerradas son minusculas
+    	if(listaCerradas.contains(palabra)) //Si la palabra que encontramos en el texto se encuentra en la lista de cerradas regresa true
+    		return true;
+    	return false;
+    	}
+ 
+ 	public ArrayList <String> leerLista(ArrayList<String> listaCerradas){
+ 		String linea = "";
+		File archivo = null;
+		archivo = new File ("C:\\Users\\Leo\\Documents\\000BELTRANrecu\\Proyecto\\PalabrasCerradas.txt");
+		
+  		try {
+         	FileReader fr = new FileReader (archivo);
+         	BufferedReader br = new BufferedReader(fr);
+         
+         	while((linea=br.readLine()) != null)
+         		listaCerradas.add(linea);
+  			}catch(Exception e){
+         	e.printStackTrace();
+      	}
+      	return listaCerradas;
+ 		} //Lee un archivo con las palabras cerradas y lo pone en un Array
+   
+    public String quitaEtiqueta(String palabra){
+    	int i,j,TAM = palabra.length();
+    	String aux = "";
+    	boolean borra = false;
+    	char c;
+    	
+    	for(i=0;i<TAM;i++){
+    		c = palabra.charAt(i);
+    		if(c == '<')
+    			borra = true;
+    		if(c == '>')
+    			borra = false;
+    			
+    		if(!borra && c!= '>')
+    			aux = aux + c;
+    		}
+    	return aux;
+    		
+    	}
+   
+    public static void main (String[] argv) {
+    	String archivo = "", direccion= "C:\\Users\\Leo\\Documents\\000BELTRANrecu\\Proyecto\\";
+    	Scanner teclado = new Scanner(System.in);
+    	Preprocesador proyecto = new Preprocesador();
+    	System.out.println("Hola, por favor ingrese el nombre del archivo");
+    	archivo = teclado.nextLine();
+    	direccion = direccion+archivo+".txt";
+		proyecto.procesaTexto(direccion);
+		System.out.println("REVISAR!!!");
+    	}
+    
+}
